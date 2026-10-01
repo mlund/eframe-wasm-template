@@ -15,7 +15,8 @@ What you get:
 - Version and git revision shown in the app (`build.rs`)
 - CI (fmt, clippy, tests, wasm build) and versioned GitHub Pages deploys
 - [`AGENTS.md`](AGENTS.md): design, testing and style rules for coding agents, plus recipes for
-  JSON settings I/O, GPU compute, seeded randomness and long computations
+  JSON settings I/O, loading files (disk, URL, drag-and-drop), custom 2D/3D graphics, GPU compute,
+  seeded randomness and long computations
 
 ### Start a new app
 
