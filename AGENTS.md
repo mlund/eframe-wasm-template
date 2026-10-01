@@ -1,6 +1,7 @@
 # Agent instructions
 
 Applies to all coding agents (Claude Code, Codex, ...). `.claude/CLAUDE.md` is a symlink to this file.
+Read it as a skill: the rules below always apply, and the *Recipes* say how to add common features when asked.
 
 <!-- template:start -->
 ## New project from this template
@@ -77,6 +78,54 @@ Upon startup, load these two skills:
   is a std/egui/rng line or nothing, don't write it. Avoid asserting `is_finite()`, `> 0` or "doesn't panic"
   where a specific value is knowable.
 - UI code (`app.rs`) is not unit tested; keep logic out of it so it needs none.
+
+## Recipes
+
+Apply these when the user asks for the feature, not by default. Each lists the pieces that must
+exist so native and web builds behave alike.
+
+### Save and load settings as JSON (reproducibility)
+
+Use when results must be reproducible or shareable: a file that rebuilds the exact app state.
+Reference implementation: [cppm-maker](https://github.com/mlund/cppm-maker) (`src/design.rs`, `src/download.rs`).
+
+- Deps: `serde` (derive) and `serde_json`; native-only `rfd` for file dialogs; wasm-only
+  `js-sys` and `web-sys` features `Blob`, `Url`, `HtmlAnchorElement`.
+- One `Settings` type in the domain module (not `app.rs`), `#[derive(Serialize, Deserialize)]`:
+  - a `format: u32` field, checked on load and bumped when an old file would be misread;
+  - a `generator` field filled from `crate::provenance()`;
+  - `#[serde(deny_unknown_fields)]`, so typos are errors rather than silently ignored;
+  - `#[serde(default)]` only on fields added later, so older files still load;
+  - units in doc comments (`/// Radius, Å.`); validate on load through the same constructors the UI uses.
+- `to_json()` writes pretty JSON, because people read these files too. `from_json(&str) -> Result<_, SettingsError>` never panics.
+- A small platform module, `io.rs`, behind `cfg(target_arch)`:
+  - native: `rfd::FileDialog` to save and open;
+  - web save: Blob → object URL → temporary `<a download>`, appended to `<body>`, clicked, removed,
+    and the URL revoked after a timeout (Safari);
+  - web load: there is no blocking dialog, so read files dropped on the window
+    (`ui.input(|i| i.raw.dropped_files)`, which has `bytes` on web and `path` natively).
+- UI: "Save settings" and "Load settings" buttons with tooltips, and dropping a file loads it too. Report the result in a status line or the log.
+- Tests: a round-trip test (`from_json(to_json(x)) == x`) and an unknown-field rejection test.
+  Also test a frozen JSON literal of the current format, so an accidental layout change fails.
+- Tell the user they also get an exported-results variant almost for free: the same file plus computed outputs.
+
+### GPU compute (`wgpu` feature)
+
+Use for heavy, data-parallel numerics. See *Features* above for the hooks. Put the WGSL shader and its buffers in a
+module behind `cfg(feature = "wgpu")` that has the same interface as the CPU implementation. Choose between
+them at startup, depending on whether `cc.wgpu_render_state` is `Some`. Test the GPU path against the CPU
+path, with a tolerance.
+
+### Randomness
+
+Add `rand` and a seedable generator (e.g. `rand_chacha`), and seed explicitly from a `seed` setting so runs
+reproduce. With `rand` default features off (no `os_rng`), no `getrandom` wasm backend is needed. If OS entropy
+is needed, add `getrandom` with its wasm/JS backend.
+
+### Long computations
+
+Keep the UI responsive. Run work in steps per frame (`request_repaint`) or on a worker: `std::thread` natively, chunked `spawn_local` on web.
+Send results back over a channel. Never block in `ui()`.
 
 ## Workflow
 

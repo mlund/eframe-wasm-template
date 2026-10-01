@@ -14,7 +14,8 @@ What you get:
 - In-app log window ([egui_logger](https://crates.io/crates/egui_logger))
 - Version and git revision shown in the app (`build.rs`)
 - CI (fmt, clippy, tests, wasm build) and versioned GitHub Pages deploys
-- [`AGENTS.md`](AGENTS.md) with design, testing and style rules for coding agents
+- [`AGENTS.md`](AGENTS.md): design, testing and style rules for coding agents, plus recipes for
+  JSON settings I/O, GPU compute, seeded randomness and long computations
 
 ### Start a new app
 
