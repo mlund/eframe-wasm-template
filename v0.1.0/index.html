@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>eframe wasm template</title>
+    <style>
+        html, body {
+            margin: 0;
+            height: 100%;
+            overflow: hidden;
+            background: #1b1b1f;
+            font-family: ui-sans-serif, system-ui, sans-serif;
+            color: #eee;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        #loading {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.7;
+        }
+    </style>
+    <!-- Lib and bin share a crate; point trunk at the lib, which holds the wasm entry.
+         wasm-opt off: the release profile already shrinks the bundle and wasm-opt adds
+         nothing once gzipped, while costing build time and a binaryen install. -->
+    
+<script type="module">
+import init, * as bindings from '/eframe-wasm-template/v0.1.0/eframe_wasm_template-38e364e861ddb250.js';
+const wasm = await init({ module_or_path: '/eframe-wasm-template/v0.1.0/eframe_wasm_template-38e364e861ddb250_bg.wasm' });
+
+
+window.wasmBindings = bindings;
+
+
+dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
+
+</script>
+<link rel="modulepreload" href="/eframe-wasm-template/v0.1.0/eframe_wasm_template-38e364e861ddb250.js" crossorigin="anonymous" integrity="sha384-5o4xz7shPOv9HeIgc+wsbQY8aba1jfRo61yvI/aHLj/A72aOASL0ghdQi/VrUTQV"><link rel="preload" href="/eframe-wasm-template/v0.1.0/eframe_wasm_template-38e364e861ddb250_bg.wasm" crossorigin="anonymous" integrity="sha384-HZfyXJLsQ2w1q2LVOsxfWRnCqGsK3euqcGLwRqXHITN+ohKKrnkBGJYyVlDE4cY5" as="fetch" type="application/wasm"></head>
+<body>
+    <!-- eframe sizes the drawing buffer from the CSS size and device pixel ratio.
+         Setting width/height here or from JavaScript fights it and renders at the wrong scale. -->
+    <canvas id="the_canvas_id"></canvas>
+    <div id="loading">loading…</div>
+</body>
+</html>
